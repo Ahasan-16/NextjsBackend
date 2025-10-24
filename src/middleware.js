@@ -1,27 +1,29 @@
 import {NextResponse} from "next/server";
+import {jwtVerify} from "jose";
 
+export async function middleware(req,res){
+    if(req.nextUrl.pathname.startsWith("/api/cash")){
+        try{
+            const HeaderList=new Headers(req.headers);
 
-export function middleware(req,res){
-    if(req.nextUrl.pathname.startsWith("/api/profile"))
-    {
-        console.log("I am middleware");
-        const header=new Headers(req.headers);
-        let username=header.get("userName");
-        if(username==="Ahasan")
-        {
-            header.set("key","value");
+            let token=HeaderList.get('token');
+
+            const key=new TextEncoder().encode(process.env.JWT_KEY);
+
+            const decode=await jwtVerify(token,key);
+            HeaderList.set('userName',decode['payload']['userName']);
+
             return NextResponse.next({
-                request:{headers:header},
-            });
+                    request:{headers:HeaderList}
+            }
+
+            );
         }
-        else {
-            return NextResponse.json({msg:"not authorized"});
+        catch (e) {
+            return NextResponse.json({message:"Invalid Token"});
         }
 
     }
-}
 
-//response er header data set
-// const res=NextResponse.next();
-// res.headers.set("key","value");
-// return res;
+
+}
